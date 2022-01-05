@@ -1,0 +1,35 @@
+{
+	"name": "EersteDataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "customer_clean",
+						"type": "DatasetReference"
+					},
+					"name": "ImportCustomerData"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "customer_clean",
+						"type": "DatasetReference"
+					},
+					"name": "WriteToDatalake"
+				}
+			],
+			"transformations": [
+				{
+					"name": "MaleFemaleSplit"
+				},
+				{
+					"name": "CountCustomerPerCountry"
+				}
+			],
+			"script": "source(output(\n\t\tCustomerId as integer,\n\t\tFirstName as string,\n\t\tMiddleInitial as string,\n\t\tLastName as string,\n\t\tFullName as string,\n\t\tGender as string,\n\t\tAge as integer,\n\t\tBirthDate as date 'dd/MM/yyyy',\n\t\tAddress_PostalCode as string,\n\t\tAddress_Street as string,\n\t\tAddress_City as string,\n\t\tAddress_Country as string,\n\t\tMobile as string,\n\t\tEmail as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> ImportCustomerData\nImportCustomerData split(Gender == \"Male\",\n\tdisjoint: false) ~> MaleFemaleSplit@(MaleCustomers, FemaleCustomers)\nMaleFemaleSplit@MaleCustomers aggregate(groupBy(Address_Country),\n\tCustomerCount = count(CustomerId)) ~> CountCustomerPerCountry\nCountCustomerPerCountry sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tCustomerId as string,\n\t\tFirstName as string,\n\t\tMiddleInitial as string,\n\t\tLastName as string,\n\t\tFullName as string,\n\t\tGender as string,\n\t\tAge as string,\n\t\tBirthDate as string,\n\t\tAddress_PostalCode as string,\n\t\tAddress_Street as string,\n\t\tAddress_City as string,\n\t\tAddress_Country as string,\n\t\tMobile as string,\n\t\tEmail as string\n\t),\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 1) ~> WriteToDatalake"
+		}
+	}
+}
