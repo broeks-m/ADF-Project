@@ -1,0 +1,10 @@
+{
+	"name": "wwi_02_Storage",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://lab01datalakeaccount.dfs.core.windows.net"
+		}
+	}
+}
