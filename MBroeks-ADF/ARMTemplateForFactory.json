@@ -1,0 +1,245 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "MBroeks-ADF"
+		},
+		"wwi_02_Storage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://lab01datalakeaccount.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/CSVOutput')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "wwi_02_Storage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "wwi-02/data-generators",
+						"fileSystem": "lab01datalakefilesystem"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CustomerId",
+						"type": "String"
+					},
+					{
+						"name": "FirstName",
+						"type": "String"
+					},
+					{
+						"name": "MiddleInitial",
+						"type": "String"
+					},
+					{
+						"name": "LastName",
+						"type": "String"
+					},
+					{
+						"name": "FullName",
+						"type": "String"
+					},
+					{
+						"name": "Gender",
+						"type": "String"
+					},
+					{
+						"name": "Age",
+						"type": "String"
+					},
+					{
+						"name": "BirthDate",
+						"type": "String"
+					},
+					{
+						"name": "Address_PostalCode",
+						"type": "String"
+					},
+					{
+						"name": "Address_Street",
+						"type": "String"
+					},
+					{
+						"name": "Address_City",
+						"type": "String"
+					},
+					{
+						"name": "Address_Country",
+						"type": "String"
+					},
+					{
+						"name": "Mobile",
+						"type": "String"
+					},
+					{
+						"name": "Email",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/wwi_02_Storage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/customer_clean')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "wwi_02_Storage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "generator-customer-clean.csv",
+						"folderPath": "wwi-02/data-generators",
+						"fileSystem": "lab01datalakefilesystem"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CustomerId",
+						"type": "String"
+					},
+					{
+						"name": "FirstName",
+						"type": "String"
+					},
+					{
+						"name": "MiddleInitial",
+						"type": "String"
+					},
+					{
+						"name": "LastName",
+						"type": "String"
+					},
+					{
+						"name": "FullName",
+						"type": "String"
+					},
+					{
+						"name": "Gender",
+						"type": "String"
+					},
+					{
+						"name": "Age",
+						"type": "String"
+					},
+					{
+						"name": "BirthDate",
+						"type": "String"
+					},
+					{
+						"name": "Address_PostalCode",
+						"type": "String"
+					},
+					{
+						"name": "Address_Street",
+						"type": "String"
+					},
+					{
+						"name": "Address_City",
+						"type": "String"
+					},
+					{
+						"name": "Address_Country",
+						"type": "String"
+					},
+					{
+						"name": "Mobile",
+						"type": "String"
+					},
+					{
+						"name": "Email",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/wwi_02_Storage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/wwi_02_Storage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('wwi_02_Storage_properties_typeProperties_url')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EersteDataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "customer_clean",
+								"type": "DatasetReference"
+							},
+							"name": "ImportCustomerData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "CSVOutput",
+								"type": "DatasetReference"
+							},
+							"name": "WriteToDatalake"
+						}
+					],
+					"transformations": [
+						{
+							"name": "MaleFemaleSplit"
+						},
+						{
+							"name": "CountCustomerPerCountry"
+						}
+					],
+					"script": "source(output(\n\t\tCustomerId as integer,\n\t\tFirstName as string,\n\t\tMiddleInitial as string,\n\t\tLastName as string,\n\t\tFullName as string,\n\t\tGender as string,\n\t\tAge as integer,\n\t\tBirthDate as date 'dd/MM/yyyy',\n\t\tAddress_PostalCode as string,\n\t\tAddress_Street as string,\n\t\tAddress_City as string,\n\t\tAddress_Country as string,\n\t\tMobile as string,\n\t\tEmail as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> ImportCustomerData\nImportCustomerData split(Gender == \"Male\",\n\tdisjoint: false) ~> MaleFemaleSplit@(MaleCustomers, FemaleCustomers)\nMaleFemaleSplit@MaleCustomers aggregate(groupBy(Address_Country),\n\tCustomerCount = count(CustomerId)) ~> CountCustomerPerCountry\nCountCustomerPerCountry sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tCustomerId as string,\n\t\tFirstName as string,\n\t\tMiddleInitial as string,\n\t\tLastName as string,\n\t\tFullName as string,\n\t\tGender as string,\n\t\tAge as string,\n\t\tBirthDate as string,\n\t\tAddress_PostalCode as string,\n\t\tAddress_Street as string,\n\t\tAddress_City as string,\n\t\tAddress_Country as string,\n\t\tMobile as string,\n\t\tEmail as string\n\t),\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 1) ~> WriteToDatalake"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/customer_clean')]",
+				"[concat(variables('factoryId'), '/datasets/CSVOutput')]"
+			]
+		}
+	]
+}
