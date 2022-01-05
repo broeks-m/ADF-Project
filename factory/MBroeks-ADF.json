@@ -1,0 +1,9 @@
+{
+	"name": "MBroeks-ADF",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "5b461360-b188-4fd1-9464-e9479de0528e",
+		"tenantId": "4d75d01c-e20b-4b13-8e1d-f731f8ffbb3e"
+	}
+}
