@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "customer_clean",
+						"referenceName": "CSVOutput",
 						"type": "DatasetReference"
 					},
 					"name": "WriteToDatalake"
